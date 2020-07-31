@@ -5,8 +5,8 @@ import torch.nn.functional as F
 from .nas_utils import random_choice
 
 
-# 基本卷积 bn 激活 block。
-# 输入 3 param : inplanes, outplanes ,k
+# 包括： conv2d,bn2d,relu,conv2d,bn2d,relu
+# 输入 3 param : inplanes, outplanes ,k表示kernel size
 # inplanes:
 # outplanes:
 class ConvBnRelu(nn.Module):
@@ -28,11 +28,14 @@ class ConvBnRelu(nn.Module):
         return self.op(x)
 
 
+# maxpooling block
+# 包括 convd，bn2d，relu maxpooling2d。
 class MaxPool(nn.Module):
     def __init__(self, inplanes, outplanes):
         super(MaxPool, self).__init__()
 
         self.op = nn.Sequential(
+            # kernel=1 conv
             nn.Conv2d(inplanes, outplanes, kernel_size=1, stride=1, bias=False),
             nn.BatchNorm2d(outplanes),
             nn.ReLU(),
@@ -43,7 +46,7 @@ class MaxPool(nn.Module):
     def forward(self, x):
         return self.op(x)
 
-
+# 基本cell
 class Cell(nn.Module):
     def __init__(self, inplanes, outplanes, shadow_bn):
         super(Cell, self).__init__()
