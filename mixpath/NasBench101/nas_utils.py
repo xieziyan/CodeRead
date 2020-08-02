@@ -1,7 +1,7 @@
 import torch
 import random
 import numpy as np
-from nasbench import api
+# from nasbench import api
 import torchvision.transforms as transforms
 
 
@@ -98,21 +98,29 @@ def data_transforms_cifar(args):
     return train_transform, valid_transform
 
 
-def random_choice(m):
+# 随机选择
+def random_choice(m, ops_number=3):
+    # 断言，m 正常范围应 大于等于 1
     assert m >= 1
-    
+
+    # choice 是一个字典
     choice = {}
-    m_ = np.random.randint(low=1, high=m+1, size=1)[0]
+    # 随机范围 [1,m+1], 随机出一个 m_,
+    m_ = np.random.randint(low=1, high=m + 1, size=1)[0]
+    # 然后在0 - m范围之间选m_个数。存到path_list中
     path_list = random.sample(range(m), m_)
-    
+
+    # 选操作类型
     ops = []
     for i in range(m_):
-        ops.append(random.sample(range(3), 1)[0])
+        # 在这里ops_number = 3  表示有 3 个 操作。 选m_次。
+        # ops.append(random.sample(range(3), 1)[0]) 原始代码，提供一个ops_number参数，为以后增加操作提供方便。
+        ops.append(random.sample(range(ops_number), 1)[0])
         # ops.append(random.sample(range(2), 1)[0])
 
     choice['op'] = ops
     choice['path'] = path_list
-    
+
     return choice
 
 
@@ -120,7 +128,7 @@ def conv_2_matrix(choice):
     op_ids = choice['op']
     path_ids = choice['path']
     selections = ['conv1x1-bn-relu', 'conv3x3-bn-relu', 'maxpool3x3']
-    
+
     ops = ['input']
     for i in range(4):  # 初始默认操作
         ops.append(selections[0])
@@ -128,7 +136,7 @@ def conv_2_matrix(choice):
         ops[id + 1] = selections[op_ids[i]]
     ops.append('conv1x1-bn-relu')
     ops.append('output')
-    
+
     matrix = np.zeros((7, 7), dtype=np.int)
     for id in path_ids:
         matrix[0, id + 1] = 1
@@ -136,12 +144,12 @@ def conv_2_matrix(choice):
     matrix[5, -1] = 1
     matrix = matrix.tolist()
     model_spec = api.ModelSpec(matrix=matrix, ops=ops)
-    
+
     return model_spec
 
 
 def count_parameters_in_MB(model):
-    return np.sum(np.prod(v.size()) for v in model.parameters())/1e6
+    return np.sum(np.prod(v.size()) for v in model.parameters()) / 1e6
 
 
 def set_seed(seed):
@@ -155,9 +163,8 @@ def set_seed(seed):
         torch.backends.cudnn.benchmark = False
 
 
-
 if __name__ == '__main__':
     set_seed(2020)
     for i in range(10):
-        choice = random_choice(m=2)
+        choice = random_choice(m=5, ops_number=4)
         print(choice)
